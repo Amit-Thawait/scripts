@@ -1,0 +1,4 @@
+This folder has one bash script and two MySQL query script files. 
+The bash script scourges for all MySQL databases the names of which match with "mostfit_" except for mostfit_box
+and runs the query in the query.sql file against each of those databases.
+The other sql file does what the function name suggests(gets the list of all databases in that have are available to the user) 
