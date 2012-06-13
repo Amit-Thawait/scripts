@@ -1,8 +1,8 @@
 #!/bin/bash
 
-usage="usage: ./initation.sh [-x] [-h]\nThis script is for creating the default development setup preferred by Koustubh Sinkar on any *nix computer that he setups"
+usage="\nUSAGE:\t\t ./initiation.sh [options]\nDESCRIPTION:\t This script is for creating the default development setup preferred by Koustubh Sinkar on any *nix computer that he setups\n\nOPTIONS:\n\t -x <username>\t does the installation for the user specified\n\t -h \t\t displays this help"
 
-while getopts "xh" opt; do
+while getopts "x:h" opt; do
     case $opt in
 	x)	    
 	    user=`whoami`
@@ -11,6 +11,14 @@ while getopts "xh" opt; do
 		exit
 	    fi
 
+	    local_user=$OPTARG
+	    does_user_exist=`cat /etc/passwd | grep $local_user`
+
+	    if [[ ! $does_user_exist =~ $local_user ]]; then
+		echo "The user "$local_user" does not currently exist on your system."
+		exit
+	    fi
+	    
             # Declaring all the regex to be required later
 	    linux="[Ll]inux"
 	    debian="[Dd]ebian"
@@ -19,61 +27,98 @@ while getopts "xh" opt; do
 	    redhat="[Rr]edhat"
 	    centos="[Cc]entos"
 
+	    basics="N"
+	    embedded="N"
+	    software="N"
+	    web="N"
+	    publish_design="N"
+	    
+	    echo 'Which packages would you like to setup?'
+	    read -p '1. Basic Necessities: [y/N] ' basics
+	    read -p '2. Embedded Systems Development: [y/N] ' embedded
+	    read -p '3. Software Development: [y/N] ' software
+	    read -p '4. Web Development: [y/N] ' web
+	    read -p '5. Publishing and Designing: [y/N] ' publish_design
+	    
 	    distribution=`cat /etc/*release`
 	    if [[ $distribution =~ $fedora ]] || [[ $distribution =~ $redhat ]] || [[ $distribution =~ $centos ]]; then
-		echo -e 'Which packages would you like to setup?\n'
-		read -p '1. Basic Necessities [y/N]' basics
-		read -p '2. Embedded Systems Development [y/N]' embedded
-		read -p '3. Software Development [y/N]' software
-		read -p '4. Web Development [y/N]' web
-		read -p '5. Publishing and Designing' publish_design
-		if [ $basics == 'y']; then
+	        if [ $basics == 'y' ]; then
 		    rpm -ivh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm
-		    yum install -y emacs vlc mozilla-vlc wine
-		elif [ $embedded == 'y' ]; then
-		    yum install -y geda icarus vhdl iverilog gwave makehuman gerbv kicad alliance 
-		elif [ $software == 'y' ]; then
-		    yum install -y fpc gcc-arm gcl clisp cmucl grass octave 
-		elif [ $web == 'y' ]; then
+		    yum install -y emacs vlc mozilla-vlc wine tmux emacs-*
+
+		fi
+		if [ $embedded == 'y' ]; then
+		    yum install -y geda icarus vhdl iverilog gwave makehuman gerbv kicad alliance
+		fi 
+		if [ $software == 'y' ]; then
+		    yum install -y fpc gcc-arm gcl clisp cmucl grass octave
+		fi 
+		if [ $web == 'y' ]; then
 		    yum install -y Django* wordpress drupal ruby* rails
-		elif [ $publish_design == 'y' ]; then
+		fi
+		if [ $publish_design == 'y' ]; then
 		    yum install -y kile kbibtex 
-		else
-		    exit 
 		fi
 	    elif [[ $distribution =~ $ubuntu ]] || [[ $distribution =~ $debian ]]; then
-		echo -e 'Which packages would you like to setup?'
-		read -p '1. Basic Necessities [y/N]' basics
-		read -p '2. Embedded Systems Development [y/N]' embedded
-		read -p '3. Software Development [y/N]' software
-		read -p '4. Web Development [y/N]' web
-		read -p '5. Publishing and Designing' publish_design
-		if [ $basics == 'y']; then
+		if [ $basics == 'y' ]; then
 		    apt-get update --assume-yes 
 		    apt-get install --assume-yes --force-yes aptitude vlc vlc-plugin-pulse mozilla-plugin-vlc emacs emacs-goodies-el git-core build-essential
-		elif [ $embedded == 'y' ]; then
+		fi
+		if [ $embedded == 'y' ]; then
 		    aptitude install -y geda icarus vhdl verilog
-		elif [ $software == 'y' ]; then
+		fi
+		if [ $software == 'y' ]; then
 		    aptitude install -y fpc gcc-arm
-		elif [ $web == 'y' ]; then
-		    aptitude install -y Django wordpress drupal ruby*
-		elif [ $publish_design == 'y' ]; then
+		fi
+		if [ $web == 'y' ]; then
+		    aptitude install -y Django wordpress drupal ruby
+		fi
+		if [ $publish_design == 'y' ]; then
 		    aptitude install -y kile kbibtex
-		else
-		    exit 
 		fi
 	    else
 		echo -e "UNKNOWN DISTRIBUTION\n Exiting NOW!"    
 	    fi
+	    
 	    # checking if git is installed on the system
 	    which git &>/dev/null
 	    if [ $? -eq 0 ]; then
-		echo "git command not found."
+		# setting git global settings
+		local_git_config_file=/home/$local_user/.gitconfig
+		sudo -u $local_user git config --file $local_git_config_file color.ui true
+		sudo -u $local_user git config --file $local_git_config_file user.name "Koustubh Sinkar"
+		sudo -u $local_user git config --file $local_git_config_file user.email ksinkar@gmail.com
+		# setting other customizations
+		cd /home/$local_user
+		git clone git://github.com/ksinkar/ksinkar.git
+		mv ksinkar dot_files
+		chown --recursive $local_user:$local_user dot_files
+		cd dot_files
+		cp --force --recursive --preserve .* /home/$local_user/
+		cd ..
+		sudo -u $local_user rm -rf dot_files
 	    else
-		cd /home/ksinkar
-		git clone git@github.com/ksinkar/
-		mv ksinkar/.* ./ --force
-		rmdir ksinkar
+		echo "git command not found."
+	    fi
+
+	    #checking if emacs is installed on the system
+	    which emacs &>/dev/null
+	    if [ $? -eq 0 ]; then
+	        #setting emacs customizations
+		emacs_load_path='/home/'$local_user'/.emacs.d'
+		mkdir $emacs_load_path
+		wget http://cx4a.org/pub/auto-complete/auto-complete-1.3.1.tar.bz2
+		tar -xvjf auto-complete-1.3.1.tar.bz2
+		cd auto-complete-1.3.1
+		make install DIR=$emacs_load_path
+		cd ..
+		rm -rf auto-complete-1.3.1 auto-complete-1.3.1.tar.bz2		    
+		cd $emacs_load_path
+		wget https://raw.github.com/capitaomorte/autopair/master/autopair.el
+		cd ..
+		chown --recursive $local_user:$local_user '.emacs.d'
+	    else
+		echo "emacs not properly installed on this system"
 	    fi
 	    ;;
 	h)
