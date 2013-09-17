@@ -1,6 +1,7 @@
 #!/bin/bash
 
-    # Copyright(C) 2012 Koustubh Sinkar 
+    # Copyright(C) 2013 Koustubh Sinkar 
+    # Special thanks to Amit Thawait 
 
     # This program is free software: you can redistribute it and/or modify
     # it under the terms of the GNU General Public License as published by
@@ -15,7 +16,7 @@
     # You should have received a copy of the GNU General Public License
     # along with this program.  If not, see <http://www.gnu.org/licenses/
 
-usage="\nUSAGE:\t\t ./install_ms_msgr.sh [options]\nDESCRIPTION:\t This script is for installing the Adobe Air for Ubuntu\n\nOPTIONS:\n\t -x \t does the installation for Adobe Air installation\n\t -h \t\t displays this help"
+usage="\nUSAGE:\t\t ./adobe_air_installer.sh [options]\nDESCRIPTION:\t This script is for installing the Adobe Air for Ubuntu\n\nOPTIONS:\n\t -x \t does the installation for Adobe Air installation\n\t -h \t\t displays this help"
 
 while getopts "xh" opt; do
     case $opt in
