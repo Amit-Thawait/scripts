@@ -1,17 +1,17 @@
 #!/bin/bash
 
     # Copyright(C) 2012 Koustubh Sinkar 
-
+     
     # This program is free software: you can redistribute it and/or modify
     # it under the terms of the GNU General Public License as published by
     # the Free Software Foundation, either version 3 of the License, or
     # (at your option) any later version.
-
+     
     # This program is distributed in the hope that it will be useful,
     # but WITHOUT ANY WARRANTY; without even the implied warranty of
     # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     # GNU General Public License for more details.
-
+     
     # You should have received a copy of the GNU General Public License
     # along with this program.  If not, see <http://www.gnu.org/licenses/
 
@@ -42,6 +42,22 @@ while getopts "x:h" opt; do
 	    redhat="[Rr]edhat"
 	    centos="[Cc]entos"
 
+	    distribution=`cat /etc/*release`
+
+	    if [[ $distribution =~ $fedora ]]; then
+                rpm -ivh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm
+                yum install -y freeworld-freetype
+                install_command="yum install -y"
+	    elif [[ $distribution =~ $redhat ]] || [[ $distribution =~ $centos ]]; then
+	        install_command="yum install -y"
+	    elif [[ $distribution =~ $ubuntu ]] || [[ $distribution =~ $debian ]]; then
+	        apt-get update --assume-yes
+	        install_command="apt-get install --assume-yes"
+	    else
+		echo -e "UNKNOWN DISTRIBUTION\n Exiting NOW!"    
+		exit
+	    fi
+
 	    basics="N"
 	    embedded="N"
 	    software="N"
@@ -55,86 +71,27 @@ while getopts "x:h" opt; do
 	    read -p '4. Web Development: [y/N] ' web
 	    read -p '5. Publishing and Designing: [y/N] ' publish_design
 	    
-	    distribution=`cat /etc/*release`
-	    if [[ $distribution =~ $fedora ]] || [[ $distribution =~ $redhat ]] || [[ $distribution =~ $centos ]]; then
-	        if [ $basics == 'y' ]; then
-		    rpm -ivh http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm
-		    yum install -y emacs vlc mozilla-vlc wine tmux emacs-*
-
-		fi
-		if [ $embedded == 'y' ]; then
-		    yum install -y geda icarus vhdl iverilog gwave makehuman gerbv kicad alliance
-		fi 
-		if [ $software == 'y' ]; then
-		    yum install -y fpc gcc-arm gcl clisp cmucl grass octave
-		fi 
-		if [ $web == 'y' ]; then
-		    yum install -y Django* wordpress drupal ruby* rails
-		fi
-		if [ $publish_design == 'y' ]; then
-		    yum install -y kile kbibtex 
-		fi
-	    elif [[ $distribution =~ $ubuntu ]] || [[ $distribution =~ $debian ]]; then
-		if [ $basics == 'y' ]; then
-		    apt-get update --assume-yes 
-		    apt-get install --assume-yes --force-yes aptitude vlc vlc-plugin-pulse mozilla-plugin-vlc emacs emacs-goodies-el git-core build-essential
-		fi
-		if [ $embedded == 'y' ]; then
-		    aptitude install -y geda icarus vhdl verilog
-		fi
-		if [ $software == 'y' ]; then
-		    aptitude install -y fpc gcc-arm
-		fi
-		if [ $web == 'y' ]; then
-		    aptitude install -y Django wordpress drupal ruby
-		fi
-		if [ $publish_design == 'y' ]; then
-		    aptitude install -y kile kbibtex
-		fi
-	    else
-		echo -e "UNKNOWN DISTRIBUTION\n Exiting NOW!"    
-	    fi
+	    basics_list="emacs vlc byobu vim git"
+	    embedded_list="geda icarus vhdl iverilog gwave makehuman gerbv kicad alliance"
+	    software_list="fpc gcc-arm gcl clisp cmucl grass octave"
+	    web_list="Django wordpress drupal"
+	    publish_design_list="kile kbibtex gimp inkscape" 
 	    
-	    # checking if git is installed on the system
-	    which git &>/dev/null
-	    if [ $? -eq 0 ]; then
-		# setting git global settings
-		local_git_config_file=/home/$local_user/.gitconfig
-		sudo -u $local_user git config --file $local_git_config_file color.ui true
-		sudo -u $local_user git config --file $local_git_config_file user.name "Koustubh Sinkar"
-		sudo -u $local_user git config --file $local_git_config_file user.email ksinkar@gmail.com
-		# setting other customizations
-		cd /home/$local_user
-		git clone git://github.com/ksinkar/ksinkar.git
-		mv ksinkar dot_files
-		chown --recursive $local_user:$local_user dot_files
-		cd dot_files
-		cp --force --recursive --preserve .* /home/$local_user/
-		cd ..
-		sudo -u $local_user rm -rf dot_files
-	    else
-		echo "git command not found."
+	    if [ $basics == 'y' ]; then		    
+		command $install_command $basics_list
 	    fi
-
-	    #checking if emacs is installed on the system
-	    which emacs &>/dev/null
-	    if [ $? -eq 0 ]; then
-	        #setting emacs customizations
-		emacs_load_path='/home/'$local_user'/.emacs.d'
-		mkdir $emacs_load_path
-		wget http://cx4a.org/pub/auto-complete/auto-complete-1.3.1.tar.bz2
-		tar -xvjf auto-complete-1.3.1.tar.bz2
-		cd auto-complete-1.3.1
-		make install DIR=$emacs_load_path
-		cd ..
-		rm -rf auto-complete-1.3.1 auto-complete-1.3.1.tar.bz2		    
-		cd $emacs_load_path
-		wget https://raw.github.com/capitaomorte/autopair/master/autopair.el
-		cd ..
-		chown --recursive $local_user:$local_user '.emacs.d'
-	    else
-		echo "emacs not properly installed on this system"
+	    if [ $embedded == 'y' ]; then
+		command $install_command $embedded_list
+	    fi 
+	    if [ $software == 'y' ]; then
+		command $install_command $software_list
+	    fi 
+	    if [ $web == 'y' ]; then
+		command $install_command $web_list
 	    fi
+	    if [ $publish_design == 'y' ]; then
+		command $install_command $publish_design_list
+	    fi	    
 	    ;;
 	h)
 	    echo -e $usage

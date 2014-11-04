@@ -36,18 +36,31 @@ while getopts "xh" opt; do
 	    centos="[Cc]entos"
 
 	    distribution=`cat /etc/*release`
-	    if [[ $distribution =~ $fedora ]] || [[ $distribution =~ $redhat ]] || [[ $distribution =~ $centos ]]; then
-		echo -e "Installation not yet supported on the Redhat distributions. Coming Soon."
-	    elif [[ $distribution =~ $ubuntu ]] || [[ $distribution =~ $debian ]]; then
+	    machine_hardware=`uname -p`
 
-		installation_dir=adobe_air_installation dependencies
-		adobe_air_runtime_link=http://airdownload.adobe.com/air/lin/download/2.6/AdobeAIRInstaller.bin
+	    installation_dir=adobe_air_installation dependencies
+	    adobe_air_runtime_link=http://airdownload.adobe.com/air/lin/download/2.6/AdobeAIRInstaller.bin
+	    mkdir -p $installation_dir
+	    cd $installation_dir
+	    wget -c $adobe_air_runtime_link
+
+	    if [[ $distribution =~ $fedora ]] || [[ $distribution =~ $redhat ]] || [[ $distribution =~ $centos ]]; then
+		echo -e "Installing dependencies for Redhat/Fedora"
+		yum install ld-linux.so.2
+		yum install gtk2-devel.i686
+		yum install libdbus-glib-1.so.2
+		yum install libhal.so.1
+		yum install rpm-devel.i586
+		yum install libXt.so.6
+		yum install gnome-keyring-devel.i686
+		yum install libDCOP.so.4
+		yum install libxml2-devel.i686
+		yum install nss-devel.i686
+		echo -e 'Finished installing dependencies for Redhat/Fedora'
+	    elif [[ $distribution =~ $ubuntu ]] || [[ $distribution =~ $debian ]]; then
+		echo -e "Installing dependencies for Debian/Ubuntu"
 		support_lib_link=http://jeffhendricks.net/getlibs-all.deb
 
-		mkdir -p $installation_dir
-		cd $installation_dir
-		
-		wget -c $adobe_air_runtime_link
 		wget -c $support_lib_link
 
 		apt-get install gdebi-core
@@ -57,14 +70,17 @@ while getopts "xh" opt; do
 		getlibs -l libhal-storage.so.1
 		getlibs -l libgnome-keyring.so.0.2.0
 		ln -s /usr/lib/i386-linux-gnu/libgnome-keyring.so.0 /usr/lib/libgnome-keyring.so.0
-
-		chmod +x AdobeAIRInstaller.bin
-		command ./AdobeAIRInstaller.bin
-
-		echo "Now open your *.air application with Adobe AIR"
+		echo -e 'Finished installing dependencies for Debian/Ubuntu'
 	    else
 		echo -e "UNKNOWN DISTRIBUTION\n Exiting NOW!"
+		exit
 	    fi
+
+	    echo "Beginning installing of Adobe AIR"
+	    chmod +x AdobeAIRInstaller.bin
+	    command ./AdobeAIRInstaller.bin
+	    echo "Adobe AIR installation complete"
+	    echo "Now open your *.air application with Adobe AIR"
 	    ;;
 	h)
 	    echo -e $usage
